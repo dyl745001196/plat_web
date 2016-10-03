@@ -1,0 +1,100 @@
+﻿<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	<style type="text/css">
+		body, html{width: 100%;height: 100%;margin:0;font-family:"微软雅黑";}
+		#allmap{height:350px;width:100%;}
+		#r-result{width:100%; font-size:14px;}
+	</style>
+	<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=UGN6mrtHD2sQULPa9GUxylvoyd9DdIl0"></script>
+	<title>城市名定位</title>
+</head>
+<body>
+	<div id="allmap"></div>
+	<div id="r-result">
+		{% if test %}
+		<p>{{ test }}</p>
+		{% endif %}
+		经度: <input id="longitude"  type="text" value="{{ longitude }}" style="width:100px; margin-right:10px;" />
+		纬度: <input id="latitude" type="text" value="{{ lattitude }}"style="width:100px; margin-right:10px;" />
+		时间: <input id="time_recv" type="text" value="{{ time_recv }}"style="width:500px; margin-right:10px;" />
+		
+		
+	</div>
+	<div>
+		编号<input type="text" id="name">
+		<br>
+		<input type="button" value="开始查询" id="button" onclick="query_begin()">
+		<br>
+		<input type="text" id="stat" value="off">
+	</div>
+</body>
+</html>
+<script type="text/javascript">
+	// 百度地图API功能
+	var map = new BMap.Map("allmap");
+	map.centerAndZoom(new BMap.Point(114.302632, 30.597184), 17);
+	map.enableScrollWheelZoom(true);
+	/* Create a new XMLHttpRequest object to talk to the Web server */
+	var xmlHttp = false;
+
+	xmlHttp = new XMLHttpRequest;
+	// 用经纬度设置地图中心点
+	function theLocation(){
+		if(document.getElementById("longitude").value != "" && document.getElementById("latitude").value != ""){
+			map.clearOverlays(); 
+			var new_point = new BMap.Point(document.getElementById("longitude").value,document.getElementById("latitude").value);
+			var marker = new BMap.Marker(new_point);  // 创建标注
+			map.addOverlay(marker);              // 将标注添加到地图中
+			map.panTo(new_point);
+			map.setCenter(new_point);      
+		}
+	}
+	
+
+	function callserver(){
+		var url ="/getinfo";
+		var stat=document.getElementById("stat").value;
+		if (stat=="on"){
+			// Open a connection to the server
+  			xmlHttp.open("GET", url+"?"+"name="+document.getElementById("name").value, true);
+  			// Setup a function for the server to run when it's done
+  			xmlHttp.onreadystatechange = updatePage;
+  			// Send the request
+  		
+  			xmlHttp.send(null);
+		}
+		
+	}
+
+  	function updatePage() {
+  		if (xmlHttp.readyState == 4) {
+    		var response = xmlHttp.responseText;
+    		document.getElementById("longitude").value = response.split(':')[1];
+    		document.getElementById("latitude").value = response.split(':')[2];
+    		document.getElementById("time_recv").value = response.split(':')[3];
+    		theLocation();
+  		}
+	}
+	function sleep(milliSeconds){
+    	var startTime = new Date().getTime(); // get the current time    
+    	while (new Date().getTime() < startTime + milliSeconds);
+	}
+
+	setInterval(callserver,1000);
+
+	
+	function query_begin(){
+		if (document.getElementById("stat").value=="off"){
+			document.getElementById("stat").value="on";
+			document.getElementById("button").value="停止查询";
+		}
+		else if(document.getElementById("stat").value=="on"){
+			document.getElementById("stat").value="off";
+			document.getElementById("button").value="开始查询";
+		}
+	}
+		
+
+</script>
